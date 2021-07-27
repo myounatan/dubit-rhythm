@@ -11,6 +11,12 @@ local GameEnum = {}
 local wfc = game.WaitForChild
 local enum = require(wfc(game:GetService("ReplicatedStorage"), 'Aero').Shared.Enum)
 
+-- player states
+GameEnum.PlayerStateType = enum("PlayerStateType", {
+    "NOTDANCING",
+    "DANCING"
+})
+
 -- game states
 GameEnum.GameStateType = enum("GameStateType", {
     "INTERMISSION",

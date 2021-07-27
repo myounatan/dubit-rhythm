@@ -20,11 +20,15 @@ function GameState:SetState(newState, ...)
 
     self:Fire("OnStateChanged", self._state, self._lasttick, ...)
 
-    self:FireAllClientsEvent("ReplicateGameState", self._state.Value, self._lasttick, ...)
+    self:FireAllClients("ReplicateGameState", self._state.Value, self._lasttick, ...)
 end
 
 function GameState:GetState()
     return self._state
+end
+
+function GameState:GetLastTick()
+    return self._lasttick
 end
 
 function GameState:Start()

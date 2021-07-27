@@ -2,16 +2,19 @@ local InteractionPad = {}
 
 local tagservice = game:GetService "CollectionService"
 
-local CharacterController, Thread
+local Thread
+
+local ffc = game.FindFirstChild
+local localPlayer = game:GetService "Players".LocalPlayer
 
 local TAG = "InteractionPad"
 local CHAR_RADIUS = Vector3.new(2, 3, 2)
 
 local DEBUG = true
 
-local function GetTagsInRadius(str, radius)
+local function GetTagsInRadius(rootPart, str, radius)
     local region =
-        Region3.new(CharacterController.RootPart.Position - radius, CharacterController.RootPart.Position + radius)
+        Region3.new(rootPart.Position - radius, rootPart.Position + radius)
 
     local taggedparts = tagservice:GetTagged(str)
     local parts = workspace:FindPartsInRegion3WithWhiteList(region, taggedparts)
@@ -38,11 +41,17 @@ function InteractionPad:Start()
     Thread.DelayRepeat(
         .1,
         function()
-            if not CharacterController.RootPart then
+            local char = localPlayer.Character
+            if not char then
                 return
             end
 
-            local guiPad = GetTagsInRadius(TAG, CHAR_RADIUS)
+            local rootPart = ffc(char, "RootPart")
+            if not rootPart then
+                return
+            end
+
+            local guiPad = GetTagsInRadius(rootPart, TAG, CHAR_RADIUS)
 
             if #guiPad > 0 and not self.ActivePad then
                 if #guiPad > 1 then

@@ -23,17 +23,18 @@ function GameState:Start()
                 warn("Received game state:", self._state, self._lasttick, ...)
             end
 
-            self:Fire("OnStateChanged", self._state, self._lasttick, ...)
+            self:FireEvent("OnStateChanged", self._state, self._lasttick, ...)
         end
     )
 end
 
 function GameState:Init()
-    GameStateService = self.Services.GameStateService
+    GameStateService = self.Services.GameState
     GameEnum = self.Shared.Game.GameEnum
     Settings = self.Shared.Game.Settings
 
     self._state = GameEnum.GameStateType.INTERMISSION
+    self._lasttick = 0
 
     self:RegisterEvent "OnStateChanged"
 end
