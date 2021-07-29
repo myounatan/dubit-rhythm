@@ -8,14 +8,13 @@
 ]]
 local Rhythm = {Client = {}}
 
+local Players = game:GetService "Players"
 local GameStateService, TimeSyncService, GameEnum, Settings, t, SongDatabase
-
-local NOTE_HIT_DISTANCE = 100 -- milliseconds
 
 local noteQualityAccuracy
 
-function Rhythm:_sendNoteFeedback(player, fretId, noteQualityType)
-    self:FireClient("SendNoteFeedback", player, fretId, noteQualityType.Value)
+function Rhythm:_sendNoteFeedback(player, fretId, noteQualityType, estimatedNoteId)
+    self:FireClient("SendNoteFeedback", player, fretId, noteQualityType.Value, estimatedNoteId)
 end
 
 function Rhythm:Start()
@@ -25,7 +24,17 @@ function Rhythm:Start()
             if newState == GameEnum.GameStateType.NEWSONG then
                 self._currentSong = songName
                 self._songStartTick = lastTick
+
+                self._playerHitNotes = {}
+            else
+                self._playerHitNotes = {}
             end
+        end
+    )
+
+    Players.PlayerRemoving:Connect(
+        function(player)
+            self._playerHitNotes[player] = nil
         end
     )
 
@@ -33,7 +42,7 @@ function Rhythm:Start()
         hitTime: integer
         fretId: integer (1-3)
     ]]
-    local noteHitValidator = t.tuple(t.integer, t.integer)
+    local noteHitValidator = t.tuple(t.number, t.integer)
     self:ConnectClientEvent(
         "NoteHit",
         function(player, hitTime, fretId)
@@ -41,6 +50,10 @@ function Rhythm:Start()
             local songName = self._currentSong
             if not songName then
                 return
+            end
+
+            if Settings.Debug then
+                warn("NoteHit::", player.Name, hitTime, fretId)
             end
 
             -- validator must pass
@@ -60,7 +73,7 @@ function Rhythm:Start()
 
             local currentSongTime = hitTime - self._songStartTick
 
-            if hitTime > currentSongTime then
+            if hitTime > (self._songStartTick + currentSongTime) then
                 if Settings.Debug then
                     warn(
                         "Note hit rejected for:",
@@ -92,9 +105,11 @@ function Rhythm:Start()
             local noteDistance = {}
 
             for noteId, note in next, songData.Notes do
-                local currentNoteTime = self._songStartTick + note.Time
+                if note.Fret == fretId then
+                    local currentNoteTime = self._songStartTick + note.Time
 
-                noteDistance[noteId] = math.abs(currentNoteTime - hitTime)
+                    noteDistance[noteId] = math.abs(currentNoteTime - hitTime)
+                end
             end
 
             local noteHitDistance = 999999
@@ -111,14 +126,37 @@ function Rhythm:Start()
                 if Settings.Debug then
                     warn("Note hit rejected for:", player.Name, "reason:", "Could not find closest noteId")
                 end
+
+                self:_sendNoteFeedback(player, fretId, GameEnum.NoteQualityType.MISSED)
+
+                return
+            end
+
+            -- check that we did not already hit the same note twice
+            if self._playerHitNotes[player] and self._playerHitNotes[player][noteHitId] then
+                if Settings.Debug then
+                    warn(
+                        "Note hit rejected for:",
+                        player.Name,
+                        "reason:",
+                        "Tried hitting the same note twice (",
+                        noteHitId,
+                        ")"
+                    )
+                end
+
+                self:_sendNoteFeedback(player, fretId, GameEnum.NoteQualityType.MISSED)
+
                 return
             end
 
             local noteHitAccuracy = 0
 
+            print("Closest note:", noteHitId, "distance from hit:", noteHitDistance)
+
             -- if the distance is less than the required hit accuracy calculate accuracy
-            if noteHitDistance < NOTE_HIT_DISTANCE then
-                noteHitAccuracy = noteHitDistance / NOTE_HIT_DISTANCE
+            if noteHitDistance < noteQualityAccuracy[1].MaxDistance then
+                noteHitAccuracy = noteHitDistance
             end
 
             if noteHitAccuracy == 0 then -- missed
@@ -126,13 +164,20 @@ function Rhythm:Start()
             else
                 -- calculate quality
                 local hitQuality = nil
-                for _, data in next, noteQualityAccuracy do
+                for _, data in ipairs(noteQualityAccuracy) do
                     if noteHitAccuracy <= data.MaxDistance then
                         hitQuality = data.Quality
                     end
                 end
 
-                self:_sendNoteFeedback(player, fretId, hitQuality)
+                self:_sendNoteFeedback(player, fretId, hitQuality, noteHitId)
+
+                self:FireEvent("OnNoteHit", player, fretId, hitQuality, noteHitId)
+
+                if not self._playerHitNotes[player] then
+                    self._playerHitNotes[player] = {}
+                end
+                self._playerHitNotes[player][noteHitId] = true
             end
         end
     )
@@ -148,13 +193,15 @@ function Rhythm:Init()
     SongDatabase = self.Shared.Game.SongDatabase
 
     noteQualityAccuracy = {
-        [1] = {Quality = GameEnum.NoteQualityType.GOOD, MaxDistance = NOTE_HIT_DISTANCE},
-        [2] = {Quality = GameEnum.NoteQualityType.GREAT, MaxDistance = 50},
-        [3] = {Quality = GameEnum.NoteQualityType.PERFECT, MaxDistance = 10}
+        [1] = {Quality = GameEnum.NoteQualityType.GOOD, MaxDistance = 0.2},
+        [2] = {Quality = GameEnum.NoteQualityType.GREAT, MaxDistance = 0.1},
+        [3] = {Quality = GameEnum.NoteQualityType.PERFECT, MaxDistance = 0.04}
     }
 
     self.CurrentSong = nil
     self.SongStartTick = nil
+
+    self:RegisterEvent "OnNoteHit"
 
     self:RegisterClientEvent "NoteHit"
     self:RegisterClientEvent "SendNoteFeedback"

@@ -8,10 +8,10 @@
 local main = {Client = {}}
 
 local Players = game:GetService "Players"
-local TimeSyncService, GameStateService, GameEnum, Thread, SongDatabase
+local TimeSyncService, GameStateService, GameEnum, Thread, SongDatabase, Settings
 
 -- constants
-local SONG = "fx_almostnever"
+local SONG = "almostnever"
 
 local INTERMISSION_TIME = 10
 
@@ -57,10 +57,15 @@ function main:Start()
         end
     )
 
-    -- start game loop
-    Thread.Delay(
-        5,
+    -- start game loop on first player added
+    local conn
+    conn =
+        Players.PlayerAdded:Connect(
         function()
+            conn:Disconnect()
+            conn = nil
+
+            GameStateService:SetState(GameEnum.GameStateType.INTERMISSION, INTERMISSION_TIME)
         end
     )
 end
@@ -72,6 +77,8 @@ function main:Init()
     Thread = self.Shared.Thread
 
     SongDatabase = self.Shared.Game.SongDatabase
+
+    Settings = self.Shared.Game.Settings
 end
 
 return main

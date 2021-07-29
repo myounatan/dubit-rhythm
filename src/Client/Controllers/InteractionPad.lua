@@ -13,8 +13,7 @@ local CHAR_RADIUS = Vector3.new(2, 3, 2)
 local DEBUG = true
 
 local function GetTagsInRadius(rootPart, str, radius)
-    local region =
-        Region3.new(rootPart.Position - radius, rootPart.Position + radius)
+    local region = Region3.new(rootPart.Position - radius, rootPart.Position + radius)
 
     local taggedparts = tagservice:GetTagged(str)
     local parts = workspace:FindPartsInRegion3WithWhiteList(region, taggedparts)
@@ -43,11 +42,17 @@ function InteractionPad:Start()
         function()
             local char = localPlayer.Character
             if not char then
+                if DEBUG then
+                    warn "cannot find local player"
+                end
                 return
             end
 
-            local rootPart = ffc(char, "RootPart")
+            local rootPart = ffc(char, "HumanoidRootPart")
             if not rootPart then
+                if DEBUG then
+                    warn "cannot find root part"
+                end
                 return
             end
 
@@ -78,7 +83,9 @@ function InteractionPad:Start()
                     end
                 end
             elseif #guiPad == 0 then
-                --print "Not near an InteractionPad!"
+                --if DEBUG then
+                    --print "Not near an InteractionPad!"
+                --end
 
                 if self.ActivePad then
                     local guiPadTags = tagservice:GetTags(self.ActivePad)
@@ -97,7 +104,6 @@ function InteractionPad:Start()
 end
 
 function InteractionPad:Init()
-    CharacterController = self.Controllers.Character
     Thread = self.Shared.Thread
 
     self.ActivePad = nil

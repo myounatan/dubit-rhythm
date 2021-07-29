@@ -31,18 +31,10 @@ GameEnum.NoteQualityType = enum("NoteQualityType", {
     "PERFECT"
 })
 
-GameEnum.NoteQualityTextColor = {
-    [GameEnum.NoteQualityType.MISSED] = Color3.fromRGB(255, 0, 0),
-    [GameEnum.NoteQualityType.GOOD] = Color3.fromRGB(255, 255, 215),
-    [GameEnum.NoteQualityType.GREAT] = Color3.fromRGB(170, 255, 255),
-    [GameEnum.NoteQualityType.PERFECT] = Color3.fromRGB(99, 255, 117)
-}
-
-GameEnum.NoteQualityTextStrokeColor = {
-    [GameEnum.NoteQualityType.MISSED] = Color3.fromRGB(0, 0, 0),
-    [GameEnum.NoteQualityType.GOOD] = Color3.fromRGB(130, 134, 93),
-    [GameEnum.NoteQualityType.GREAT] = Color3.fromRGB(44, 68, 134),
-    [GameEnum.NoteQualityType.PERFECT] = Color3.fromRGB(55, 143, 28)
+GameEnum.PlayerScores = {
+    [GameEnum.NoteQualityType.GOOD] = 5,
+    [GameEnum.NoteQualityType.GREAT] = 10,
+    [GameEnum.NoteQualityType.PERFECT] = 50,
 }
 
 

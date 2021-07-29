@@ -13,11 +13,20 @@ function GameState:GetState()
     return self._state
 end
 
+function GameState:GetLastTick()
+    return self._lasttick
+end
+
+function GameState:GetLastParams()
+    return self._lastParams
+end
+
 function GameState:Start()
     GameStateService.ReplicateGameState:Connect(
         function(stateTypeValue, lasttick, ...)
             self._state = GameEnum.GameStateType[stateTypeValue]
             self._lasttick = lasttick
+            self._lastParams = {...}
 
             if Settings.Debug then
                 warn("Received game state:", self._state, self._lasttick, ...)
@@ -35,6 +44,7 @@ function GameState:Init()
 
     self._state = GameEnum.GameStateType.INTERMISSION
     self._lasttick = 0
+    self._lastParams = {}
 
     self:RegisterEvent "OnStateChanged"
 end

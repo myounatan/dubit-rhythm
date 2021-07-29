@@ -7,6 +7,7 @@
 ]]
 local GameState = {Client = {}}
 
+local Players = game:GetService "Players"
 local ClientService, GameEnum, Settings
 
 function GameState:SetState(newState, ...)
@@ -36,13 +37,15 @@ function GameState:Start()
     ClientService:ConnectEvent(
         "OnClientLoaded",
         function(player)
-            self:FireClient(
-                "ReplicateGameState",
-                player,
-                self._state.Value,
-                self._lasttick,
-                unpack(self._lastParams)
-            )
+            if Settings.Debug then
+                warn "Replicating game state on join"
+            end
+
+            if not self._state then
+                return
+            end
+
+            self:FireClient("ReplicateGameState", player, self._state.Value, self._lasttick, unpack(self._lastParams))
         end
     )
 end
@@ -53,8 +56,8 @@ function GameState:Init()
     Settings = self.Shared.Game.Settings
 
     self._lastParams = {}
-
-    self._state = GameEnum.GameStateType.INTERMISSION
+    self._lasttick = 0
+    self._state = nil
 
     self:RegisterClientEvent "ReplicateGameState"
 

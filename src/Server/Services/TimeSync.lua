@@ -36,7 +36,7 @@ function TimeSyncService:Start()
     self:ConnectClientEvent(
         testEvent,
         function(player)
-            self:FireClientEvent(testEvent, player, self:GetTime())
+            self:FireClient(testEvent, player, self:GetTime())
         end
     )
 
