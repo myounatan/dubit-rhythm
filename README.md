@@ -1,5 +1,5 @@
 # roblox-rhythm
-A dance rhythm game where players on the dance floor must tap buttons on the screen, or keys on their keyboard, in sync with notes played in a song*.
+A dance rhythm game where players on the dance floor must tap buttons on their screen, or keys on their keyboard, in sync with notes played in a song*.
 
 Features:
 * Mobile / PC support
