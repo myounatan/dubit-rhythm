@@ -1,4 +1,4 @@
-# dubit-rhythm
+# roblox-rhythm
 A dance rhythm game where players on the dance floor must top buttons on the screen in sync with notes played in a song*.
 
 Features:
